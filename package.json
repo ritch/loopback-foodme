@@ -24,7 +24,8 @@
     "open": ">= 0.0.2",
     "testacular": "canary",
     "loopback": "~1.2.1",
-    "loopback-explorer": "~1.0.0"
+    "loopback-explorer": "~1.0.0",
+    "loopback-connector-mysql": "~1.0.1"
   },
   "engines": {
     "node": ">= 0.8.4"

@@ -24,13 +24,21 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   var app = loopback();
 
   // db
-  app.dataSource('db', {connector: loopback.Memory});
+  var db = app.dataSource('db', {
+    connector: require('loopback-connector-mysql'),
+    "host": "demo.strongloop.com",
+    "port": 3306,
+    "database": "demo",
+    "username": "demo",
+    "password": "L00pBack"
+  });
 
   // models
   var Restaurant = app.model('restaurant', {
     dataSource: 'db',
     properties: {
-      id: {type: String, id: true},
+      id: {type: String, id: true, generated: true},
+      shortName: String,
       price: Number,
       rating: Number,
       name: String,
@@ -52,7 +60,7 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   });
 
   var Order = app.model('order', {
-    dataSource: 'db'
+    dataSource: 'db',
     properties: {
       items: Array,
       payment: Object,
@@ -85,18 +93,24 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
 
   // start the server
   // drop old data
-  Restaurant.destroyAll(function() {
-    Order.destroyAll(function() {
-      MenuItem.destroyAll(importData);
+  app.dataSources.db.automigrate(function() {
+    Restaurant.destroyAll(function() {
+      Order.destroyAll(function() {
+        MenuItem.destroyAll(importData);
+      });
     });
   });
+
 
   function importData() {
     // read the data from json and start the server
     fs.readFile(DATA_FILE, function(err, data) {
       JSON.parse(data).forEach(function(obj) {
         var menuItems = obj.menuItems;
+        var shortName = obj.id;
         delete obj.menuItems;
+        delete obj.id;
+        obj.shortName = shortName;
         Restaurant.create(obj, function(err, restaurant) {
           menuItems.forEach(function(item) {
             item.restaurantId = restaurant.id;
