@@ -1,0 +1,9 @@
+#!/bin/bash
+
+BASE_DIR=`dirname $0`
+
+echo ""
+echo "Starting Testacular Server (http://vojtajina.github.com/testacular)"
+echo "-------------------------------------------------------------------"
+
+$BASE_DIR/../node_modules/testacular/bin/testacular start $BASE_DIR/../config/testacular-e2e.conf.js $*
