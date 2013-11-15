@@ -30,11 +30,39 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   var Restaurant = app.model('restaurant', {
     dataSource: 'db',
     properties: {
-      id: {type: String, id: true}
+      id: {type: String, id: true},
+      price: Number,
+      rating: Number,
+      name: String,
+      cuisine: String,
+      opens: String,
+      closes: String,
+      location: String,
+      description: String
     }
   });
-  var MenuItem = app.model('menu-item', {dataSource: 'db'});
-  var Order = app.model('order', {dataSource: 'db'});
+
+  var MenuItem = app.model('menu-item', {
+    dataSource: 'db',
+    properties: {
+      name: String,
+      price: Number,
+      restaurantId: String
+    }
+  });
+
+  var Order = app.model('order', {
+    dataSource: 'db'
+    properties: {
+      items: Array,
+      payment: Object,
+      deliverTo: Object
+    }
+  });
+
+  // relations
+  Restaurant.hasMany(MenuItem, {as: 'menuItems'});
+  Restaurant.hasMany(Order);
 
   // log requests
   app.use(loopback.logger('dev'));
@@ -56,15 +84,30 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   app.use('/test/', loopback.static(TEST_DIR));
 
   // start the server
-  // read the data from json and start the server
-  fs.readFile(DATA_FILE, function(err, data) {
-    JSON.parse(data).forEach(function(restaurant) {
-      console.log(restaurant);
-      Restaurant.create(restaurant);
-    });
-
-    app.listen(PORT, function() {
-      open('http://localhost:' + PORT + '/');
+  // drop old data
+  Restaurant.destroyAll(function() {
+    Order.destroyAll(function() {
+      MenuItem.destroyAll(importData);
     });
   });
+
+  function importData() {
+    // read the data from json and start the server
+    fs.readFile(DATA_FILE, function(err, data) {
+      JSON.parse(data).forEach(function(obj) {
+        var menuItems = obj.menuItems;
+        delete obj.menuItems;
+        Restaurant.create(obj, function(err, restaurant) {
+          menuItems.forEach(function(item) {
+            item.restaurantId = restaurant.id;
+            restaurant.menuItems.create(item);
+          });
+        });
+      });
+
+      app.listen(PORT, function() {
+        open('http://localhost:' + PORT + '/');
+      });
+    });
+  }
 };

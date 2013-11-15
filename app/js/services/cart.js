@@ -53,7 +53,7 @@ foodMeApp.service('cart', function Cart(localStorage, customer, $rootScope, $htt
     if (self.items.length) {
       return $http.post('/api/orders', {
         items: self.items,
-        restaurant: self.restaurant,
+        restaurantId: self.restaurant.id,
         payment: self.payment,
         deliverTo: customer
       }).then(function(response) {
